@@ -72,11 +72,27 @@ def recursion_osc_armonico_susy(xsq_init:float, E_init:float, k:int, g:float):
     }
     max_power = 2*k
     for i in range (4, max_power+1):
-        #SBAGLIATO VA RIFATTO
         x_pows_dict[i] = -(((-1 + i) * ((-2520 + 2754 * i - 1175 * i**2 + 245 * i**3 - 25 * i**4 + i**5) * x_pows_dict[-8 + i] + 
                          8 * (-60 + 47 * i - 12 * i**2 + i**3) * E_init * x_pows_dict[-6 + i] - 
                          8 * (-3 + i) * (12 - 6 * i + i**2 - 2 * E_init**2) * x_pows_dict[-4 + i] - 
                          32 * (-2 + i) * E_init * x_pows_dict[-2 + i])) / (16 * (-2 + i) * i))
+    return x_pows_dict
+
+def recursion_coulomb_ordine4(xinitial:float, E_init:float, k:int, g:float):
+    # H = P^2 + 1/X espanso attorno a X=1
+    x_pows_dict = {
+        -5:0,
+        -4:0,
+        -3:0,
+        -2:0,
+        -1:0,
+        0:1,
+        1:xinitial,
+    }
+    max_power = 2*k
+    for i in range (2, max_power+1):
+        x_pows_dict[i] = E_init*((i-3)/2)*x_pows_dict[i-4]- ((i+7)/2)*x_pows_dict[i-2]+ (((i-3)*(i-4)*(i-5))/8)*x_pows_dict[i-6] + (5/2)*x_pows_dict[i-4] + (15/4)*x_pows_dict[i-1]
+        
     return x_pows_dict
 
 
@@ -89,6 +105,7 @@ def bootstrap(E_min:float, E_max:float, xsq_min:float, xsq_max:float, E_epsilon:
     for i, y in enumerate(y_values):
         for j, x in enumerate(x_values):
             powers = recursion_osc_armonico_susy(xsq_init=y, E_init=x, k=k, g=g)
+            #powers = recursion_coulomb_ordine4(xinitial=y, E_init=x, k=k, g=g)
             map[i, j] = compute_if_matrix_is_ok(x_pows_dict=powers, k=k)
             
     return map
@@ -96,22 +113,22 @@ def bootstrap(E_min:float, E_max:float, xsq_min:float, xsq_max:float, E_epsilon:
     
 
 #Initialize values
-E_min=1.5
-E_max=2.5
-xsq_min=0.5
-xsq_max=2
-E_epsilon=5e-3
-xsq_epsilon=5e-3
+E_min=0
+E_max=1
+xsq_min=0
+xsq_max=1
+E_epsilon=5e-1
+xsq_epsilon=5e-1
 g=1
 
 #PLOTTO LA MAPPA
 plt.figure(figsize=(8, 8))
-map_7 = bootstrap(E_min=E_min,E_max=E_max, xsq_min=xsq_min, xsq_max=xsq_max, E_epsilon=E_epsilon, xsq_epsilon=xsq_epsilon, g=g, k=11)
+map_7 = bootstrap(E_min=E_min,E_max=E_max, xsq_min=xsq_min, xsq_max=xsq_max, E_epsilon=E_epsilon, xsq_epsilon=xsq_epsilon, g=g, k=5)
 cmap_7 = LinearSegmentedColormap.from_list("custom", ["white", "orange"])
-map_8 = bootstrap(E_min=E_min,E_max=E_max, xsq_min=xsq_min, xsq_max=xsq_max, E_epsilon=E_epsilon, xsq_epsilon=xsq_epsilon, g=g, k=13)
-cmap_8 = LinearSegmentedColormap.from_list("custom", ["white", "blue"])
+#map_8 = bootstrap(E_min=E_min,E_max=E_max, xsq_min=xsq_min, xsq_max=xsq_max, E_epsilon=E_epsilon, xsq_epsilon=xsq_epsilon, g=g, k=13)
+#cmap_8 = LinearSegmentedColormap.from_list("custom", ["white", "blue"])
 plt.imshow(map_7, cmap=cmap_7, extent=(E_min, E_max, xsq_min, xsq_max), origin='lower', alpha=0.7)
-plt.imshow(map_8, cmap=cmap_8, extent=(E_min, E_max, xsq_min, xsq_max), origin='lower', alpha=0.7)
+#plt.imshow(map_8, cmap=cmap_8, extent=(E_min, E_max, xsq_min, xsq_max), origin='lower', alpha=0.7)
 
 legend_elements = [
     Patch(facecolor='orange', edgecolor='orange', label='K=11'),
@@ -120,6 +137,6 @@ legend_elements = [
 
 plt.legend(handles=legend_elements, loc='lower right')
 plt.xlabel("E")
-plt.ylabel(r"$< X^2 >$")
+plt.ylabel(r"$< X >$")
 plt.title("Zone permesse")
 plt.show()
